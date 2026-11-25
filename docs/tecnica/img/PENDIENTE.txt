@@ -1,0 +1,7 @@
+Pendiente. En esta carpeta van estos archivos:
+
+arquitectura.png
+datos-inventario.png
+datos-personal.png
+datos-ventas.png
+venta.png

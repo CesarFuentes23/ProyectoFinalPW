@@ -1,0 +1,27 @@
+Pendiente. En esta carpeta van estos archivos:
+
+01-ingreso.png
+02-abrir-caja.png
+03-vender.png
+04-venta-cobrada.png
+05-credito-fiscal.png
+06-ccf-emitido.png
+07-caja.png
+08-resumen.png
+09-documentos.png
+10-anular.png
+11-existencias.png
+12-ajuste.png
+13-movimientos.png
+14-menu.png
+15-receta.png
+16-compras.png
+17-compra-nueva.png
+18-por-pagar.png
+19-pago.png
+20-empleados.png
+21-planilla.png
+22-ajuste-planilla.png
+23-boleta.png
+24-sucursales.png
+25-usuarios.png
