@@ -46,6 +46,7 @@ function Cifra({ nombre, valor, fondo }) {
     </div>
   );
 }
+
 export default function Resumen() {
   const { sucursal } = useSesion();
   const { datos, cargando, error } = useConsulta('/tablero');
@@ -53,10 +54,15 @@ export default function Resumen() {
   if (cargando && !datos) return <Cargando />;
   if (error) return <Aviso error={error} />;
 
-  const { hoy, semana, mas_vendidos: masVendidos, alertas, por_pagar: porPagar } = datos;
+  const { hoy, semana, mas_vendidos: masVendidos, alertas, por_pagar: porPagar, mes } = datos;
   const agotados = alertas.filter((alerta) => alerta.agotado).length;
   const enMinimo = `${plural(alertas.length, 'artículo', 'artículos')} en el mínimo`;
   const sinNada = agotados > 0 ? `, ${plural(agotados, 'agotado', 'agotados')}` : '';
+  const hayPerdida = mes.utilidad_neta < 0;
+  const colorResultado = hayPerdida ? 'text-cereza' : 'text-hoja';
+  const diaDeHoy = Number(mes.hasta.slice(8));
+  const cuantas = mes.quincenas_de_planilla;
+  const quincenas = `${cuantas} ${cuantas === 1 ? 'quincena' : 'quincenas'}`;
 
   return (
     <div className="space-y-6">
@@ -135,6 +141,23 @@ export default function Resumen() {
               </ul>
             </>
           )}
+        </Panel>
+
+        <Panel titulo="Resultado del mes">
+          <Dato nombre="Ventas sin IVA" valor={dinero(mes.ventas_sin_iva)} />
+          <Dato nombre="Costo de lo vendido" valor={`− ${dinero(mes.costo_de_lo_vendido)}`} />
+          <Dato nombre="Utilidad bruta" valor={dinero(mes.utilidad_bruta)} />
+          <div className="linea-punteada mt-2 pt-2">
+            <Dato nombre="Gastos de operación" valor={`− ${dinero(mes.gastos)}`} />
+            <Dato nombre={`Planilla (${quincenas})`} valor={`− ${dinero(mes.planilla)}`} />
+          </div>
+          <p className={`mt-2 font-titulo text-3xl font-bold ${colorResultado}`}>
+            {dinero(mes.utilidad_neta)}
+          </p>
+          <p className="text-sm text-piedra-600">
+            {hayPerdida ? 'de pérdida' : 'de utilidad neta'} del 1 al {diaDeHoy} de este mes. La
+            planilla incluye salarios y aportes patronales.
+          </p>
         </Panel>
 
         <Panel
