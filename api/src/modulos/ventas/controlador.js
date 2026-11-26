@@ -1,11 +1,10 @@
 // api/src/modulos/ventas/controlador.js
-// pendiente: lo sube quien tiene este módulo
 import { Op } from 'sequelize';
 import { Cliente } from '../../modelos/index.js';
 import { TIPOS_DOCUMENTO } from '../../config/reglas.js';
 import { sucursalDe } from '../../intermedios/autenticar.js';
 import { exigir, tomar, unoDe } from '../../utilidades/validar.js';
-import { noEncontrado } from '../../utilidades/errores.js';
+import { noEncontrado, solicitudInvalida } from '../../utilidades/errores.js';
 import * as servicio from './servicio.js';
 const CAMPOS_CLIENTE = ['nombre', 'nit', 'nrc', 'giro', 'direccion', 'correo'];
 
@@ -47,11 +46,14 @@ export async function obtenerVenta(req, res, next) {
 export async function anularVenta(req, res, next) {
   try {
     exigir(req.body, ['motivo']);
+    const motivo = String(req.body.motivo).trim();
+    if (motivo.length < 10)
+      throw solicitudInvalida('Explica el motivo de la anulación con al menos 10 caracteres');
     const venta = await servicio.anularVenta({
       id: req.params.id,
       sucursalId: sucursalDe(req),
       usuario: req.usuario,
-      motivo: req.body.motivo
+      motivo
     });
     res.status(201).json(venta);
   } catch (error) {
@@ -94,3 +96,4 @@ export async function actualizarCliente(req, res, next) {
     next(error);
   }
 }
+
