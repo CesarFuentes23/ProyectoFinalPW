@@ -1,6 +1,0 @@
-Pendiente. En esta carpeta van estos archivos:
-
-Bitacora_prompts_IA.pdf
-Declaracion_uso_IA.pdf
-Documentacion_tecnica.pdf
-Manual_de_usuario.pdf
