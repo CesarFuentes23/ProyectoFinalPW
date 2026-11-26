@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { Op, fn, col, literal } from 'sequelize';
-import { Venta, VentaLinea, VentaPago, Compra } from '../../modelos/index.js';
+import {
+  Venta,
+  VentaLinea,
+  VentaPago,
+  Compra,
+  CompraLinea,
+  Planilla
+} from '../../modelos/index.js';
 import { permitir, sucursalDe } from '../../intermedios/autenticar.js';
 import { redondear } from '../../utilidades/dinero.js';
 import { fechaLocal, finDelDia, hoy, inicioDelDia, sumarDias } from '../../utilidades/fechas.js';
@@ -28,6 +35,54 @@ async function ventasPorDia(condicion, desde) {
   return serie;
 }
 
+async function resultadoDelMes(sucursalId) {
+  const primerDia = `${hoy().slice(0, 8)}01`;
+  const [anio, mes] = primerDia.split('-').map(Number);
+  const deLaSucursal = sucursalId ? { sucursal_id: sucursalId } : {};
+
+  const [ventas, gastos, planillas] = await Promise.all([
+    Venta.findAll({
+      where: { ...deLaSucursal, estado: 'emitida', fecha: { [Op.gte]: inicioDelDia(primerDia) } },
+      attributes: ['subtotal', 'costo']
+    }),
+    CompraLinea.findAll({
+      attributes: [[fn('sum', col('compra_linea.total')), 'monto']],
+      where: { clase: 'gasto' },
+      include: [
+        {
+          model: Compra,
+          attributes: [],
+          where: { ...deLaSucursal, fecha: { [Op.between]: [primerDia, hoy()] } },
+          required: true
+        }
+      ],
+      raw: true
+    }),
+    Planilla.findAll({
+      where: { ...deLaSucursal, anio, mes },
+      attributes: ['total_devengado', 'total_patronal']
+    })
+  ]);
+
+  const ventasSinIva = redondear(ventas.reduce((suma, venta) => suma + venta.subtotal, 0));
+  const costo = redondear(ventas.reduce((suma, venta) => suma + venta.costo, 0));
+  const planilla = redondear(
+    planillas.reduce((suma, fila) => suma + fila.total_devengado + fila.total_patronal, 0)
+  );
+  const gastosDelMes = redondear(Number(gastos[0]?.monto) || 0);
+
+  return {
+    desde: primerDia,
+    hasta: hoy(),
+    ventas_sin_iva: ventasSinIva,
+    costo_de_lo_vendido: costo,
+    utilidad_bruta: redondear(ventasSinIva - costo),
+    gastos: gastosDelMes,
+    planilla,
+    quincenas_de_planilla: planillas.length,
+    utilidad_neta: redondear(ventasSinIva - costo - gastosDelMes - planilla)
+  };
+}
 async function resumen(req, res, next) {
   try {
     const todas = req.usuario.rol === 'administrador' && !req.query.sucursal_id;
@@ -36,7 +91,7 @@ async function resumen(req, res, next) {
     if (sucursalId) condicion.sucursal_id = sucursalId;
     const deHoy = { ...condicion, fecha: { [Op.between]: [inicioDelDia(), finDelDia()] } };
 
-    const [ventasHoy, pagosHoy, masVendidos, semana, alertas, porPagar] = await Promise.all([
+    const [ventasHoy, pagosHoy, masVendidos, semana, alertas, porPagar, mes] = await Promise.all([
       Venta.findAll({ where: deHoy, attributes: ['total', 'costo', 'iva'] }),
       VentaPago.findAll({
         attributes: ['metodo', [fn('sum', col('monto')), 'monto']],
@@ -69,7 +124,8 @@ async function resumen(req, res, next) {
         where: sucursalId
           ? { estado: 'pendiente', sucursal_id: sucursalId }
           : { estado: 'pendiente' }
-      })
+      }),
+      resultadoDelMes(sucursalId)
     ]);
 
     const total = redondear(ventasHoy.reduce((suma, venta) => suma + venta.total, 0));
@@ -97,7 +153,8 @@ async function resumen(req, res, next) {
         monto: redondear(fila.monto)
       })),
       alertas,
-      por_pagar: redondear(porPagar || 0)
+      por_pagar: redondear(porPagar || 0),
+      mes
     });
   } catch (error) {
     next(error);
