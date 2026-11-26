@@ -4,6 +4,7 @@ import { exigir, tomar, unoDe } from '../../utilidades/validar.js';
 import { noEncontrado, solicitudInvalida } from '../../utilidades/errores.js';
 import { hoy } from '../../utilidades/fechas.js';
 import * as servicio from './servicio.js';
+
 const CAMPOS_PROVEEDOR = [
   'nombre',
   'nit',
@@ -14,16 +15,19 @@ const CAMPOS_PROVEEDOR = [
   'dias_credito',
   'activo'
 ];
+
 async function compraPermitida(req) {
   const compra = await servicio.obtenerCompra(req.params.id);
   if (req.usuario.rol !== 'administrador' && compra.sucursal_id !== req.usuario.sucursal_id)
     throw noEncontrado('La compra');
   return compra;
 }
+
 function alcance(req) {
   const todas = req.usuario.rol === 'administrador' && !req.query.sucursal_id;
   return todas ? null : sucursalDe(req);
 }
+
 export async function listarProveedores(req, res, next) {
   try {
     res.json(await Proveedor.findAll({ order: [['nombre', 'ASC']] }));
@@ -31,6 +35,7 @@ export async function listarProveedores(req, res, next) {
     next(error);
   }
 }
+
 export async function crearProveedor(req, res, next) {
   try {
     exigir(req.body, ['nombre']);
@@ -39,6 +44,7 @@ export async function crearProveedor(req, res, next) {
     next(error);
   }
 }
+
 export async function actualizarProveedor(req, res, next) {
   try {
     const proveedor = await Proveedor.findByPk(req.params.id);
@@ -49,13 +55,15 @@ export async function actualizarProveedor(req, res, next) {
     next(error);
   }
 }
+
 export async function listarCompras(req, res, next) {
   try {
     res.json(await servicio.listarCompras(alcance(req), req.query));
-     } catch (error) {
+  } catch (error) {
     next(error);
   }
 }
+
 export async function obtenerCompra(req, res, next) {
   try {
     res.json(await compraPermitida(req));
@@ -63,6 +71,7 @@ export async function obtenerCompra(req, res, next) {
     next(error);
   }
 }
+
 export async function crearCompra(req, res, next) {
   try {
     exigir(req.body, [
@@ -87,6 +96,7 @@ export async function crearCompra(req, res, next) {
     next(error);
   }
 }
+
 export async function crearPago(req, res, next) {
   try {
     exigir(req.body, ['monto', 'metodo']);
@@ -101,6 +111,7 @@ export async function crearPago(req, res, next) {
     next(error);
   }
 }
+
 export async function cuentasPorPagar(req, res, next) {
   try {
     res.json(await servicio.cuentasPorPagar(alcance(req)));
@@ -108,11 +119,12 @@ export async function cuentasPorPagar(req, res, next) {
     next(error);
   }
 }
+
 export async function resumen(req, res, next) {
   try {
     const hasta = req.query.hasta || hoy();
     const desde = req.query.desde || `${hasta.slice(0, 8)}01`;
-     res.json(await servicio.resumenCostosGastos(alcance(req), desde, hasta));
+    res.json(await servicio.resumenCostosGastos(alcance(req), desde, hasta));
   } catch (error) {
     next(error);
   }

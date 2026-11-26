@@ -5,6 +5,7 @@ export class ErrorApi extends Error {
     this.detalle = detalle;
   }
 }
+
 export const solicitudInvalida = (mensaje, detalle) => new ErrorApi(400, mensaje, detalle);
 export const noAutenticado = (mensaje = 'Inicia sesión para continuar') =>
   new ErrorApi(401, mensaje);

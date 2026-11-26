@@ -1,4 +1,3 @@
-// web/src/paginas/Ventas.jsx
 import { useState } from 'react';
 import api from '../api/cliente.js';
 import { useSesion } from '../contexto/Sesion.jsx';
@@ -91,9 +90,11 @@ export default function Ventas() {
   });
   const { datos, cargando, error, recargar } = useConsulta('/ventas', { ...filtros, limite: 1000 });
   const [elegida, setElegida] = useState(null);
+
   const ventas = datos || [];
   const emitidas = ventas.filter((venta) => venta.estado === 'emitida');
   const total = emitidas.reduce((suma, venta) => suma + venta.total, 0);
+
   const columnas = [
     { titulo: 'Número', celda: (v) => <span className="font-semibold">{v.numero}</span> },
     { titulo: 'Fecha', celda: (v) => fechaHora(v.fecha) },
@@ -166,4 +167,3 @@ export default function Ventas() {
     </div>
   );
 }
-

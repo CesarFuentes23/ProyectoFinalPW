@@ -1,4 +1,3 @@
-// api/src/modulos/ventas/controlador.js
 import { Op } from 'sequelize';
 import { Cliente } from '../../modelos/index.js';
 import { TIPOS_DOCUMENTO } from '../../config/reglas.js';
@@ -6,6 +5,7 @@ import { sucursalDe } from '../../intermedios/autenticar.js';
 import { exigir, tomar, unoDe } from '../../utilidades/validar.js';
 import { noEncontrado, solicitudInvalida } from '../../utilidades/errores.js';
 import * as servicio from './servicio.js';
+
 const CAMPOS_CLIENTE = ['nombre', 'nit', 'nrc', 'giro', 'direccion', 'correo'];
 
 export async function crearVenta(req, res, next) {
@@ -96,4 +96,3 @@ export async function actualizarCliente(req, res, next) {
     next(error);
   }
 }
-

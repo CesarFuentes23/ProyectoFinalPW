@@ -36,17 +36,10 @@ function EditorReceta({ receta, articulos, alCambiar }) {
   function agregar() {
     const articulo = articulos.find((opcion) => opcion.id === Number(nuevoId));
     if (!articulo) return;
-
     alCambiar([
       ...receta,
-      {
-        articulo_id: articulo.id,
-        nombre: articulo.nombre,
-        unidad: articulo.unidad,
-        cantidad: ''
-      }
+      { articulo_id: articulo.id, nombre: articulo.nombre, unidad: articulo.unidad, cantidad: '' }
     ]);
-
     setNuevoId('');
   }
 
@@ -57,11 +50,9 @@ function EditorReceta({ receta, articulos, alCambiar }) {
           Agrega cada insumo y empaque que se gasta al preparar una unidad.
         </p>
       )}
-
       {receta.map((componente, indice) => (
         <div key={componente.articulo_id} className="flex items-center gap-2 text-sm">
           <span className="flex-1">{componente.nombre}</span>
-
           <input
             type="number"
             min="0.001"
@@ -78,9 +69,7 @@ function EditorReceta({ receta, articulos, alCambiar }) {
               )
             }
           />
-
           <span className="w-12 text-piedra-600">{componente.unidad}</span>
-
           <button
             type="button"
             className="font-semibold text-cereza"
@@ -90,7 +79,6 @@ function EditorReceta({ receta, articulos, alCambiar }) {
           </button>
         </div>
       ))}
-
       <div className="flex items-end gap-2 pt-1">
         <Selector
           etiqueta="Agregar insumo o empaque"
@@ -105,7 +93,6 @@ function EditorReceta({ receta, articulos, alCambiar }) {
             }))
           ]}
         />
-
         <Boton variante="secundario" disabled={!nuevoId} onClick={agregar}>
           Agregar
         </Boton>
@@ -116,7 +103,6 @@ function EditorReceta({ receta, articulos, alCambiar }) {
 
 function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
   const { enviando, error, enviar } = useEnvio();
-
   const [ficha, setFicha] = useState({
     nombre: '',
     categoria: 'Café caliente',
@@ -124,26 +110,21 @@ function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
     precio: '',
     articulo_id: ''
   });
-
   const [receta, setReceta] = useState([]);
   const deReventa = articulos.filter((articulo) => articulo.tipo === 'reventa');
 
   async function guardar(evento) {
     evento.preventDefault();
-
     const cuerpo = { ...ficha, precio: Number(ficha.precio) };
-
     if (ficha.tipo === 'elaborado') {
       cuerpo.receta = receta.map((componente) => ({
         articulo_id: componente.articulo_id,
         cantidad: Number(componente.cantidad)
       }));
-
       delete cuerpo.articulo_id;
     } else if (!ficha.articulo_id) {
       delete cuerpo.articulo_id;
     }
-
     const creado = await enviar(() => api.crear('/productos', cuerpo));
     if (creado) alGuardar(creado);
   }
@@ -152,14 +133,12 @@ function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
     <Ventana titulo="Producto nuevo" alCerrar={alCerrar} ancho="max-w-xl">
       <form onSubmit={guardar} className="space-y-3">
         <Aviso error={error} />
-
         <Campo
           etiqueta="Nombre en el menú"
           required
           value={ficha.nombre}
           onChange={(e) => setFicha({ ...ficha, nombre: e.target.value })}
         />
-
         <div className="grid grid-cols-3 gap-3">
           <Selector
             etiqueta="Categoría"
@@ -167,7 +146,6 @@ function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
             onChange={(e) => setFicha({ ...ficha, categoria: e.target.value })}
             opciones={CATEGORIAS.map((c) => ({ valor: c, texto: c }))}
           />
-
           <Selector
             etiqueta="Tipo"
             value={ficha.tipo}
@@ -177,7 +155,6 @@ function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
               { valor: 'reventa', texto: 'Se revende empacado' }
             ]}
           />
-
           <Campo
             etiqueta="Precio con IVA"
             type="number"
@@ -188,7 +165,6 @@ function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
             onChange={(e) => setFicha({ ...ficha, precio: e.target.value })}
           />
         </div>
-
         {ficha.tipo === 'elaborado' ? (
           <div className="linea-punteada pt-3">
             <p className="mb-2 font-semibold">Receta por unidad</p>
@@ -205,7 +181,6 @@ function ProductoNuevo({ articulos, alCerrar, alGuardar }) {
             ]}
           />
         )}
-
         <Boton type="submit" disabled={enviando}>
           Crear producto
         </Boton>
@@ -228,10 +203,8 @@ function FichaProducto({ producto, articulos, alGuardar }) {
 
   async function guardar(evento) {
     evento.preventDefault();
-
     const respuesta = await guardado.enviar(async () => {
       await api.actualizar(`/productos/${producto.id}`, { precio: Number(precio) });
-
       if (producto.tipo === 'elaborado' && editando) {
         await api.actualizar(`/productos/${producto.id}/receta`, {
           receta: receta.map((componente) => ({
@@ -240,10 +213,8 @@ function FichaProducto({ producto, articulos, alGuardar }) {
           }))
         });
       }
-
       return true;
     });
-
     if (respuesta) alGuardar();
   }
 
@@ -251,7 +222,6 @@ function FichaProducto({ producto, articulos, alGuardar }) {
     const respuesta = await guardado.enviar(() =>
       api.actualizar(`/productos/${producto.id}`, { activo: !producto.activo })
     );
-
     if (respuesta) alGuardar();
   }
 
@@ -268,7 +238,6 @@ function FichaProducto({ producto, articulos, alGuardar }) {
     >
       <form onSubmit={guardar} className="space-y-4">
         <Aviso error={guardado.error} />
-
         <div className="grid grid-cols-3 gap-3 text-sm">
           <Campo
             etiqueta="Precio con IVA"
@@ -279,18 +248,15 @@ function FichaProducto({ producto, articulos, alGuardar }) {
             value={precio}
             onChange={(e) => setPrecio(e.target.value)}
           />
-
           <div>
             <p className="mb-1 text-piedra-600">Costo de preparación</p>
             <p className="text-xl font-bold">{dinero(producto.costo)}</p>
           </div>
-
           <div>
             <p className="mb-1 text-piedra-600">Margen sobre precio sin IVA</p>
             <p className="text-xl font-bold">{producto.margen} %</p>
           </div>
         </div>
-
         <p className="text-sm text-piedra-600">
           Precio sin IVA {dinero(neto)}. Utilidad por unidad {dinero(neto - producto.costo)}.
         </p>
@@ -302,7 +268,6 @@ function FichaProducto({ producto, articulos, alGuardar }) {
                 ? 'Cada venta descuenta de bodega'
                 : 'Producto de reventa: descuenta una unidad'}
             </p>
-
             {producto.tipo === 'elaborado' && !editando && (
               <button
                 type="button"
@@ -313,7 +278,6 @@ function FichaProducto({ producto, articulos, alGuardar }) {
               </button>
             )}
           </div>
-
           {editando ? (
             <EditorReceta receta={receta} articulos={articulos} alCambiar={setReceta} />
           ) : (
@@ -325,11 +289,9 @@ function FichaProducto({ producto, articulos, alGuardar }) {
                     className="border-b border-piedra-100 last:border-0"
                   >
                     <td className="py-1.5">{componente.nombre}</td>
-
                     <td className="py-1.5 text-right font-semibold">
                       {cantidad(componente.cantidad, componente.unidad)}
                     </td>
-
                     <td className="w-24 py-1.5 text-right text-piedra-600">
                       {dinero(componente.costo)}
                     </td>
@@ -344,7 +306,6 @@ function FichaProducto({ producto, articulos, alGuardar }) {
           <Boton variante="secundario" onClick={alternarActivo} disabled={guardado.enviando}>
             {producto.activo ? 'Sacar del menú' : 'Volver a poner en el menú'}
           </Boton>
-
           <Boton type="submit" disabled={guardado.enviando}>
             Guardar cambios
           </Boton>
@@ -376,7 +337,6 @@ export default function Menu() {
       >
         <Boton onClick={() => setCreando(true)}>Agregar producto</Boton>
       </Encabezado>
-
       <Aviso error={productos.error || articulos.error} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
@@ -384,11 +344,9 @@ export default function Menu() {
           {CATEGORIAS.map((categoria) => {
             const deCategoria = lista.filter((producto) => producto.categoria === categoria);
             if (deCategoria.length === 0) return null;
-
             return (
               <section key={categoria}>
                 <h2 className="mb-1.5 text-xl text-cafe-900">{categoria}</h2>
-
                 <ul className="overflow-hidden rounded-lg border border-piedra-200 bg-white">
                   {deCategoria.map((producto) => (
                     <li key={producto.id} className="border-b border-piedra-100 last:border-0">
@@ -398,10 +356,8 @@ export default function Menu() {
                         className={claseProducto(elegidoId === producto.id, producto.activo)}
                       >
                         <span className="font-semibold">{producto.nombre}</span>
-
                         <span className="flex items-center gap-3">
                           <span className="text-piedra-600">margen {producto.margen} %</span>
-
                           <span className="w-16 text-right font-semibold">
                             {dinero(producto.precio)}
                           </span>

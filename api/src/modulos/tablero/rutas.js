@@ -83,6 +83,7 @@ async function resultadoDelMes(sucursalId) {
     utilidad_neta: redondear(ventasSinIva - costo - gastosDelMes - planilla)
   };
 }
+
 async function resumen(req, res, next) {
   try {
     const todas = req.usuario.rol === 'administrador' && !req.query.sucursal_id;

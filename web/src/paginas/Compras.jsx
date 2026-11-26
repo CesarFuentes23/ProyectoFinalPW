@@ -17,6 +17,7 @@ import {
   Ventana
 } from '../componentes/ui.jsx';
 import { dinero, fecha, hoyIso, redondear } from '../utilidades/formato.js';
+
 const METODOS_PAGO = [
   { valor: 'transferencia', texto: 'Transferencia' },
   { valor: 'efectivo', texto: 'Efectivo' },
@@ -24,6 +25,7 @@ const METODOS_PAGO = [
   { valor: 'tarjeta', texto: 'Tarjeta' }
 ];
 const LINEA_VACIA = { articulo_id: '', descripcion: '', cantidad: '', costo_unitario: '' };
+
 function CompraNueva({ alCerrar, alGuardar }) {
   const proveedores = useConsulta('/proveedores');
   const articulos = useConsulta('/articulos', { activos: 'true' });
@@ -37,6 +39,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
     metodo_pago: 'efectivo'
   });
   const [lineas, setLineas] = useState([{ ...LINEA_VACIA }]);
+
   const suma = redondear(
     lineas.reduce(
       (total, linea) => total + (Number(linea.cantidad) || 0) * (Number(linea.costo_unitario) || 0),
@@ -44,9 +47,11 @@ function CompraNueva({ alCerrar, alGuardar }) {
     )
   );
   const iva = ficha.tipo_documento === 'CCF' ? redondear(suma * 0.13) : 0;
+
   function cambiarLinea(indice, campo, valor) {
     setLineas(lineas.map((linea, i) => (i === indice ? { ...linea, [campo]: valor } : linea)));
   }
+
   async function guardar(evento) {
     evento.preventDefault();
     const compra = await enviar(() =>
@@ -63,14 +68,16 @@ function CompraNueva({ alCerrar, alGuardar }) {
     );
     if (compra) alGuardar();
   }
+
   const opcionesArticulo = [
     { valor: '', texto: 'Gasto que no entra a bodega' },
     ...(articulos.datos || []).map((a) => ({ valor: a.id, texto: `${a.nombre} (${a.unidad})` }))
   ];
+
   return (
     <Ventana titulo="Registrar factura de compra" alCerrar={alCerrar} ancho="max-w-3xl">
       <form onSubmit={guardar} className="space-y-4">
-         <Aviso error={error || proveedores.error || articulos.error} />
+        <Aviso error={error || proveedores.error || articulos.error} />
         <div className="grid gap-3 sm:grid-cols-3">
           <Selector
             etiqueta="Proveedor"
@@ -93,7 +100,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
             onChange={(e) => setFicha({ ...ficha, fecha: e.target.value })}
           />
           <Selector
-           etiqueta="Documento recibido"
+            etiqueta="Documento recibido"
             value={ficha.tipo_documento}
             onChange={(e) => setFicha({ ...ficha, tipo_documento: e.target.value })}
             opciones={[
@@ -125,6 +132,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
             />
           )}
         </div>
+
         <div className="linea-punteada pt-3">
           <p className="mb-2 font-semibold">Detalle de la factura</p>
           <div className="space-y-2">
@@ -157,7 +165,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
                   onChange={(e) => cambiarLinea(indice, 'cantidad', e.target.value)}
                 />
                 <Campo
-                 etiqueta="Costo unitario"
+                  etiqueta="Costo unitario"
                   className="col-span-4 sm:col-span-2"
                   type="number"
                   min="0.0001"
@@ -189,6 +197,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
             Agregar otra línea
           </button>
         </div>
+
         <div className="ml-auto max-w-xs">
           <Dato nombre="Subtotal" valor={dinero(suma)} />
           <Dato nombre="IVA 13 %" valor={dinero(iva)} />
@@ -203,6 +212,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
     </Ventana>
   );
 }
+
 function DetalleCompra({ id, alCerrar, alCambiar }) {
   const { datos: compra, cargando, error, recargar } = useConsulta(`/compras/${id}`);
   const pago = useEnvio();
@@ -212,6 +222,7 @@ function DetalleCompra({ id, alCerrar, alCambiar }) {
     referencia: '',
     fecha: hoyIso()
   });
+
   async function pagar(evento) {
     evento.preventDefault();
     const respuesta = await pago.enviar(() =>
@@ -219,10 +230,11 @@ function DetalleCompra({ id, alCerrar, alCambiar }) {
     );
     if (respuesta) {
       setAbono({ ...abono, monto: '', referencia: '' });
-       recargar();
+      recargar();
       alCambiar();
     }
   }
+
   return (
     <Ventana titulo="Factura de compra" alCerrar={alCerrar} ancho="max-w-2xl">
       {cargando && !compra && <Cargando />}
@@ -260,6 +272,7 @@ function DetalleCompra({ id, alCerrar, alCambiar }) {
             <Dato nombre="Total" valor={dinero(compra.total)} />
             <Dato nombre="Saldo pendiente" valor={dinero(compra.saldo)} fuerte />
           </div>
+
           {compra.pagos.length > 0 && (
             <div className="linea-punteada pt-3 text-sm">
               <p className="mb-1 font-semibold">Pagos realizados</p>
@@ -274,6 +287,7 @@ function DetalleCompra({ id, alCerrar, alCambiar }) {
               ))}
             </div>
           )}
+
           {compra.estado === 'pendiente' && (
             <form onSubmit={pagar} className="linea-punteada space-y-3 pt-3">
               <p className="font-semibold">Registrar pago al proveedor</p>
@@ -281,7 +295,7 @@ function DetalleCompra({ id, alCerrar, alCambiar }) {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Campo
                   etiqueta="Monto"
-                   type="number"
+                  type="number"
                   min="0.01"
                   step="0.01"
                   max={compra.saldo}
@@ -325,9 +339,11 @@ function DetalleCompra({ id, alCerrar, alCambiar }) {
     </Ventana>
   );
 }
+
 function ListaCompras({ alVer }) {
   const { datos, cargando, error } = useConsulta('/compras');
   const resumen = useConsulta('/compras/resumen');
+
   const columnas = [
     { titulo: 'Fecha', celda: (c) => fecha(c.fecha) },
     {
@@ -344,9 +360,10 @@ function ListaCompras({ alVer }) {
         ) : (
           <Etiqueta tono="alerta">Debe {dinero(c.saldo)}</Etiqueta>
         )
-         },
+    },
     { titulo: 'Total', derecha: true, celda: (c) => dinero(c.total) }
   ];
+
   return (
     <>
       {resumen.datos && (
@@ -371,10 +388,12 @@ function ListaCompras({ alVer }) {
     </>
   );
 }
+
 function PorPagar({ alVer }) {
   const { datos, cargando, error } = useConsulta('/cuentas-por-pagar');
   if (cargando) return <Cargando />;
   if (error) return <Aviso error={error} />;
+
   const columnas = [
     { titulo: 'Proveedor', celda: (d) => <span className="font-semibold">{d.proveedor}</span> },
     { titulo: 'Documento', celda: (d) => d.documento },
@@ -396,6 +415,7 @@ function PorPagar({ alVer }) {
       celda: (d) => <span className="font-semibold">{dinero(d.saldo)}</span>
     }
   ];
+
   return (
     <div className="grid gap-5 lg:grid-cols-[18rem_1fr]">
       <Panel titulo="Deuda con proveedores">
@@ -405,7 +425,7 @@ function PorPagar({ alVer }) {
             datos.vencido > 0 ? 'text-cereza' : 'text-hoja'
           }`}
         >
-              {datos.vencido > 0 ? `${dinero(datos.vencido)} ya vencieron` : 'Nada vencido'}
+          {datos.vencido > 0 ? `${dinero(datos.vencido)} ya vencieron` : 'Nada vencido'}
         </p>
         <ul className="linea-punteada mt-3 space-y-1.5 pt-3 text-sm">
           {datos.por_proveedor.map((fila) => (
@@ -425,10 +445,12 @@ function PorPagar({ alVer }) {
     </div>
   );
 }
+
 function Proveedores() {
   const { datos, cargando, error, recargar } = useConsulta('/proveedores');
   const guardado = useEnvio();
   const [ficha, setFicha] = useState(null);
+
   async function guardar(evento) {
     evento.preventDefault();
     const cuerpo = { ...ficha, dias_credito: Number(ficha.dias_credito) || 0 };
@@ -442,6 +464,7 @@ function Proveedores() {
       recargar();
     }
   }
+
   const columnas = [
     { titulo: 'Proveedor', celda: (p) => <span className="font-semibold">{p.nombre}</span> },
     { titulo: 'NIT', celda: (p) => p.nit },
@@ -457,6 +480,7 @@ function Proveedores() {
     value: ficha[nombre] ?? '',
     onChange: (e) => setFicha({ ...ficha, [nombre]: e.target.value })
   });
+
   return (
     <>
       <div className="mb-4 flex justify-end">
@@ -466,7 +490,7 @@ function Proveedores() {
       {cargando ? (
         <Cargando />
       ) : (
-         <Tabla
+        <Tabla
           columnas={columnas}
           filas={datos || []}
           alElegir={setFicha}
@@ -498,11 +522,13 @@ function Proveedores() {
     </>
   );
 }
+
 export default function Compras() {
   const [pestana, setPestana] = useState('compras');
   const [creando, setCreando] = useState(false);
   const [viendo, setViendo] = useState(null);
   const [version, setVersion] = useState(0);
+
   return (
     <div>
       <Encabezado
@@ -529,7 +555,7 @@ export default function Compras() {
           alGuardar={() => {
             setCreando(false);
             setVersion(version + 1);
-             }}
+          }}
         />
       )}
       {viendo && (

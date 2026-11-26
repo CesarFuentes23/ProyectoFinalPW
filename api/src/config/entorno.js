@@ -1,4 +1,5 @@
 import 'dotenv/config';
+
 const entorno = {
   puerto: Number(process.env.PUERTO) || 4000,
   bd: {
@@ -14,4 +15,5 @@ const entorno = {
   },
   origenWeb: process.env.ORIGEN_WEB || 'http://localhost:5173'
 };
+
 export default entorno;

@@ -4,93 +4,106 @@
 @import '@fontsource/nunito/latin-600.css';
 @import '@fontsource/nunito/latin-700.css';
 @import 'tailwindcss';
+
 /* colores tomados de la artesanía de La Palma: fondo café y colores planos con contorno oscuro */
 @theme {
---font-titulo: 'Baloo 2', 'Trebuchet MS', sans-serif;
---font-texto: 'Nunito', Arial, sans-serif;
---color-cafe-950: #2d1b14;
---color-cafe-900: #3b2419;
---color-cafe-800: #5a3423;
---color-cafe-600: #7a4a2e;
---color-cafe-400: #c4a184;
---color-cafe-100: #efe3d6;
---color-cafe-50: #f8f1e9;
---color-cal: #f4f1ec;
---color-tinta: #1f1a17;
---color-piedra-600: #5f5a55;
---color-piedra-400: #8c857e;
---color-piedra-200: #ded8d0;
---color-piedra-100: #eeeae4;
---color-cereza: #d62839;
---color-cereza-100: #fde4e6;
---color-maiz: #f5b700;
---color-maiz-700: #8a5a00;
---color-maiz-100: #fff1c7;
---color-hoja: #2a9d55;
---color-hoja-100: #dcf3e4;
---color-laguna: #1f6fb2;
---color-laguna-100: #dcebf8;
---shadow-sello: 3px 3px 0 var(--color-tinta);
-}
-@layer base {
-html {
-font-family: var(--font-texto);
-font-size: 15px;
-color: var(--color-tinta);
-background: var(--color-cal);
+  --font-titulo: 'Baloo 2', 'Trebuchet MS', sans-serif;
+  --font-texto: 'Nunito', Arial, sans-serif;
+
+  --color-cafe-950: #2d1b14;
+  --color-cafe-900: #3b2419;
+  --color-cafe-800: #5a3423;
+  --color-cafe-600: #7a4a2e;
+  --color-cafe-400: #c4a184;
+  --color-cafe-100: #efe3d6;
+  --color-cafe-50: #f8f1e9;
+
+  --color-cal: #f4f1ec;
+  --color-tinta: #1f1a17;
+  --color-piedra-600: #5f5a55;
+  --color-piedra-400: #8c857e;
+  --color-piedra-200: #ded8d0;
+  --color-piedra-100: #eeeae4;
+
+  --color-cereza: #d62839;
+  --color-cereza-100: #fde4e6;
+  --color-maiz: #f5b700;
+  --color-maiz-700: #8a5a00;
+  --color-maiz-100: #fff1c7;
+  --color-hoja: #2a9d55;
+  --color-hoja-100: #dcf3e4;
+  --color-laguna: #1f6fb2;
+  --color-laguna-100: #dcebf8;
+
+  --shadow-sello: 3px 3px 0 var(--color-tinta);
 }
 
-h1, h2, h3 {
-font-family: var(--font-titulo);
-font-weight: 700;
-line-height: 1.15;
+@layer base {
+  html {
+    font-family: var(--font-texto);
+    font-size: 15px;
+    color: var(--color-tinta);
+    background: var(--color-cal);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-titulo);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-maiz);
+    outline-offset: 2px;
+  }
+
+  input[type='number']::-webkit-inner-spin-button {
+    appearance: none;
+  }
 }
-:focus-visible {
-outline: 3px solid var(--color-maiz);
-outline-offset: 2px;
-}
-input[type='number']::-webkit-inner-spin-button {
-appearance: none;
-}
-}
+
 /* franja de rombos de colores, como los bordes pintados de La Palma */
 .franja {
-height: 14px;
-background-image: url('/franja.svg');
-background-repeat: repeat-x;
-background-size: 64px 14px;
+  height: 14px;
+  background-image: url('/franja.svg');
+  background-repeat: repeat-x;
+  background-size: 64px 14px;
 }
+
 .tiquete {
-background: #fff;
-border: 2px solid var(--color-tinta);
-border-radius: 14px;
-box-shadow: var(--shadow-sello);
-padding-bottom: 0.75rem;
+  background: #fff;
+  border: 2px solid var(--color-tinta);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sello);
+  padding-bottom: 0.75rem;
 }
+
 .linea-punteada {
-border-top: 1.5px dashed var(--color-piedra-200);
+  border-top: 1.5px dashed var(--color-piedra-200);
 }
+
 @media (prefers-reduced-motion: reduce) {
-* {
-transition: none !important;
-animation: none !important;
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
-}
+
 @media print {
-body * {
-visibility: hidden;
-}
-.imprimible, .imprimible * {
-visibility: visible;
-}
-.imprimible {
-position: absolute;
-inset: 0 auto auto 0;
-width: 80mm;
-border: none;
-box-shadow: none;
-}
-.no-imprimir {
-display: none !important;
-}
+  body * {
+    visibility: hidden;
+  }
+  .imprimible, .imprimible * {
+    visibility: visible;
+  }
+  .imprimible {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 80mm;
+    border: none;
+    box-shadow: none;
+  }
+  .no-imprimir {
+    display: none !important;
+  }
 }

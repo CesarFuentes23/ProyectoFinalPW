@@ -5,7 +5,18 @@ import { noEncontrado, sinPermiso, solicitudInvalida } from '../../utilidades/er
 import { PLANILLA } from '../../config/reglas.js';
 import * as servicio from './servicio.js';
 
-const CAMPOS_EMPLEADO = ['nombres', 'apellidos', 'dui', 'cargo', 'salario_mensual', 'fecha_ingreso', 'afp', 'cuenta_banco', 'activo', 'sucursal_id'];
+const CAMPOS_EMPLEADO = [
+  'nombres',
+  'apellidos',
+  'dui',
+  'cargo',
+  'salario_mensual',
+  'fecha_ingreso',
+  'afp',
+  'cuenta_banco',
+  'activo',
+  'sucursal_id'
+];
 const CARGOS = ['barista', 'cajero', 'gerente', 'cocina', 'administracion'];
 
 function alcance(req) {
@@ -15,7 +26,8 @@ function alcance(req) {
 
 function validarEmpleado(datos) {
   if (datos.cargo !== undefined) unoDe(datos.cargo, CARGOS, 'El cargo');
-  if (datos.salario_mensual !== undefined) numeroPositivo(datos.salario_mensual, 'El salario mensual');
+  if (datos.salario_mensual !== undefined)
+    numeroPositivo(datos.salario_mensual, 'El salario mensual');
   if (datos.dui !== undefined && !/^\d{8}-\d$/.test(datos.dui)) {
     throw solicitudInvalida('El DUI debe tener el formato 00000000-0');
   }
@@ -27,7 +39,10 @@ export async function listarEmpleados(req, res, next) {
     const empleados = await Empleado.findAll({
       where: sucursalId ? { sucursal_id: sucursalId } : {},
       include: [{ model: Sucursal, attributes: ['id', 'nombre'] }],
-      order: [['apellidos', 'ASC'], ['nombres', 'ASC']]
+      order: [
+        ['apellidos', 'ASC'],
+        ['nombres', 'ASC']
+      ]
     });
     res.json(empleados);
   } catch (error) {
@@ -51,7 +66,8 @@ export async function actualizarEmpleado(req, res, next) {
   try {
     const empleado = await Empleado.findByPk(req.params.id);
     if (!empleado) throw noEncontrado('El empleado');
-    if (req.usuario.rol !== 'administrador' && empleado.sucursal_id !== req.usuario.sucursal_id) throw sinPermiso();
+    if (req.usuario.rol !== 'administrador' && empleado.sucursal_id !== req.usuario.sucursal_id)
+      throw sinPermiso();
     validarEmpleado(req.body);
     const datos = tomar(req.body, CAMPOS_EMPLEADO);
     if (req.usuario.rol !== 'administrador') delete datos.sucursal_id;
@@ -64,7 +80,10 @@ export async function actualizarEmpleado(req, res, next) {
 
 export async function reglasDePlanilla(req, res, next) {
   try {
-    const tramos = await TramoRenta.findAll({ where: { periodo: 'quincenal' }, order: [['tramo', 'ASC']] });
+    const tramos = await TramoRenta.findAll({
+      where: { periodo: 'quincenal' },
+      order: [['tramo', 'ASC']]
+    });
     res.json({ ...PLANILLA, tramos });
   } catch (error) {
     next(error);
@@ -97,7 +116,8 @@ export async function crearPlanilla(req, res, next) {
 
 async function planillaPermitida(req) {
   const planilla = await servicio.obtenerPlanilla(req.params.id);
-  if (req.usuario.rol !== 'administrador' && planilla.sucursal_id !== req.usuario.sucursal_id) throw sinPermiso();
+  if (req.usuario.rol !== 'administrador' && planilla.sucursal_id !== req.usuario.sucursal_id)
+    throw sinPermiso();
   return planilla;
 }
 
@@ -112,7 +132,13 @@ export async function obtenerPlanilla(req, res, next) {
 export async function ajustarDetalle(req, res, next) {
   try {
     await planillaPermitida(req);
-    res.json(await servicio.ajustarDetalle({ planillaId: req.params.id, detalleId: req.params.detalleId, datos: req.body }));
+    res.json(
+      await servicio.ajustarDetalle({
+        planillaId: req.params.id,
+        detalleId: req.params.detalleId,
+        datos: req.body
+      })
+    );
   } catch (error) {
     next(error);
   }

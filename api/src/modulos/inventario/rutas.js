@@ -16,7 +16,6 @@ rutas.put('/existencias/:articuloId/minimo', jefatura, controlador.fijarMinimo);
 
 rutas.get('/movimientos-inventario', jefatura, controlador.listarMovimientos);
 rutas.get('/movimientos-inventario/resumen', jefatura, controlador.contarMovimientos);
-
 rutas.post('/ajustes-inventario', jefatura, controlador.crearAjuste);
 
 export default rutas;

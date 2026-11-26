@@ -40,8 +40,20 @@ test('salario de $1,150 mensuales: ISSS con tope y renta del tramo III', () => {
   assert.equal(boleta.liquido, 474.17);
 });
 
+test('salario de $2,400 mensuales: renta del tramo IV', () => {
+  const boleta = calcularBoleta({ salarioMensual: 2400 }, quincenal);
+  assert.equal(boleta.salario, 1200);
+  assert.equal(boleta.isss, 15);
+  assert.equal(boleta.afp, 87);
+  assert.equal(boleta.renta, 167.97);
+  assert.equal(boleta.liquido, 930.03);
+});
+
 test('las horas extra y bonificaciones aumentan la base de los descuentos', () => {
-  const boleta = calcularBoleta({ salarioMensual: 600, horasExtra: 40, bonificacion: 10, otrosDescuentos: 25 }, quincenal);
+  const boleta = calcularBoleta(
+    { salarioMensual: 600, horasExtra: 40, bonificacion: 10, otrosDescuentos: 25 },
+    quincenal
+  );
   assert.equal(boleta.devengado, 350);
   assert.equal(boleta.isss, 10.5);
   assert.equal(boleta.afp, 25.38);

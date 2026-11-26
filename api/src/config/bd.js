@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import entorno from './entorno.js';
+
 const bd = new Sequelize(entorno.bd.nombre, entorno.bd.usuario, entorno.bd.clave, {
   host: entorno.bd.host,
   port: entorno.bd.puerto,
@@ -12,4 +13,5 @@ const bd = new Sequelize(entorno.bd.nombre, entorno.bd.usuario, entorno.bd.clave
     updatedAt: 'actualizado_en'
   }
 });
+
 export default bd;

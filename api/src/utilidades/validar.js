@@ -1,4 +1,5 @@
 import { solicitudInvalida } from './errores.js';
+
 export function exigir(cuerpo, campos) {
   const faltantes = campos.filter((campo) => {
     const valor = cuerpo[campo];
@@ -6,8 +7,9 @@ export function exigir(cuerpo, campos) {
   });
   if (faltantes.length > 0) {
     throw solicitudInvalida('Faltan datos obligatorios', { faltantes });
-     }
+  }
 }
+
 export function numeroPositivo(valor, nombre, permitirCero = false) {
   const numero = Number(valor);
   const valido = Number.isFinite(numero) && (permitirCero ? numero >= 0 : numero > 0);
@@ -18,18 +20,21 @@ export function numeroPositivo(valor, nombre, permitirCero = false) {
   }
   return numero;
 }
+
 export function unoDe(valor, opciones, nombre) {
   if (!opciones.includes(valor)) {
     throw solicitudInvalida(`${nombre} debe ser uno de: ${opciones.join(', ')}`);
   }
   return valor;
 }
+
 export function listaNoVacia(valor, nombre) {
   if (!Array.isArray(valor) || valor.length === 0) {
     throw solicitudInvalida(`${nombre} debe tener al menos un elemento`);
   }
   return valor;
 }
+
 export function tomar(cuerpo, campos) {
   const resultado = {};
   campos.forEach((campo) => {

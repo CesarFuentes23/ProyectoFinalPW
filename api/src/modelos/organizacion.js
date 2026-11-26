@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import bd from '../config/bd.js';
 import { ROLES } from '../config/reglas.js';
 import { requerido, texto } from './tipos.js';
+
 export const Sucursal = bd.define('sucursal', {
   codigo: { type: DataTypes.STRING(6), allowNull: false, unique: true },
   nombre: requerido(),
@@ -10,6 +11,7 @@ export const Sucursal = bd.define('sucursal', {
   telefono: texto(20),
   activa: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true }
 });
+
 export const Usuario = bd.define(
   'usuario',
   {

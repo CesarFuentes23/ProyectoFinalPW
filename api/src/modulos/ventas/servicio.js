@@ -1,5 +1,3 @@
-// api/src/modulos/ventas/servicio.js
-// pendiente: lo sube quien tiene este módulo
 import { Op } from 'sequelize';
 import {
   bd,
@@ -23,6 +21,7 @@ import { listaNoVacia, numeroPositivo, unoDe } from '../../utilidades/validar.js
 import { moverExistencia } from '../inventario/servicio.js';
 import { costoDeReceta } from '../catalogo/servicio.js';
 import { calcularResumen } from '../caja/servicio.js';
+
 const detalleCompleto = [
   { model: VentaLinea, as: 'lineas' },
   { model: VentaPago, as: 'pagos' },
@@ -40,6 +39,7 @@ async function prepararLineas(lineas, transaccion) {
     transaction: transaccion
   });
   const porId = new Map(productos.map((producto) => [producto.id, producto]));
+
   return lineas.map((linea) => {
     const producto = porId.get(Number(linea.producto_id));
     if (!producto) throw solicitudInvalida('La venta incluye un producto que no está en el menú');
@@ -80,6 +80,7 @@ async function verificarExistencias(consumo, sucursalId, transaccion) {
   const disponibles = new Map(
     existencias.map((existencia) => [existencia.articulo_id, existencia.cantidad])
   );
+
   const faltantes = consumo
     .filter((item) => (disponibles.get(item.articulo.id) || 0) < item.cantidad)
     .map((item) => ({
@@ -88,6 +89,7 @@ async function verificarExistencias(consumo, sucursalId, transaccion) {
       requerido: item.cantidad,
       disponible: disponibles.get(item.articulo.id) || 0
     }));
+
   if (faltantes.length > 0) {
     throw conflicto('No hay insumos suficientes para completar la venta', { faltantes });
   }
@@ -100,12 +102,14 @@ function prepararPagos(pagos, total, efectivoRecibido) {
     monto: redondear(numeroPositivo(pago.monto, 'El monto del pago')),
     referencia: pago.referencia || null
   }));
+
   const pagado = redondear(limpios.reduce((suma, pago) => suma + pago.monto, 0));
   if (pagado !== total) {
     throw solicitudInvalida(
       `Los pagos suman $${pagado.toFixed(2)} y el total es $${total.toFixed(2)}`
     );
   }
+
   const enEfectivo = redondear(
     limpios
       .filter((pago) => pago.metodo === 'efectivo')
@@ -114,6 +118,7 @@ function prepararPagos(pagos, total, efectivoRecibido) {
   const recibido = enEfectivo > 0 ? redondear(efectivoRecibido ?? enEfectivo) : 0;
   if (recibido < enEfectivo)
     throw solicitudInvalida('El efectivo recibido no cubre el pago en efectivo');
+
   return { pagos: limpios, recibido, cambio: redondear(recibido - enEfectivo) };
 }
 
@@ -145,7 +150,9 @@ export async function registrarVenta({
       lock: transaccion.LOCK.UPDATE
     });
     if (!turno) throw conflicto('Abre tu caja antes de vender');
+
     const sucursal = await Sucursal.findByPk(sucursalId, { transaction: transaccion });
+
     if (tipoDocumento === 'CCF') {
       const cliente = clienteId
         ? await Cliente.findByPk(clienteId, { transaction: transaccion })
@@ -154,9 +161,11 @@ export async function registrarVenta({
       if (!cliente.nit || !cliente.nrc)
         throw solicitudInvalida('El cliente necesita NIT y NRC para emitir crédito fiscal');
     }
+
     const preparadas = await prepararLineas(lineas, transaccion);
     const consumo = consumoPorArticulo(preparadas);
     await verificarExistencias(consumo, sucursalId, transaccion);
+
     const totales = desglosarIva(preparadas.reduce((suma, linea) => suma + linea.total, 0));
     const cobro = prepararPagos(pagos, totales.total, efectivoRecibido);
     if (cobro.cambio > 0) {
@@ -170,6 +179,7 @@ export async function registrarVenta({
       }
     }
     const correlativo = await tomarCorrelativo(sucursalId, tipoDocumento, transaccion);
+
     const venta = await Venta.create(
       {
         sucursal_id: sucursalId,
@@ -189,6 +199,7 @@ export async function registrarVenta({
       },
       { transaction: transaccion }
     );
+
     await VentaLinea.bulkCreate(
       preparadas.map((linea) => ({
         venta_id: venta.id,
@@ -201,10 +212,12 @@ export async function registrarVenta({
       })),
       { transaction: transaccion }
     );
+
     await VentaPago.bulkCreate(
       cobro.pagos.map((pago) => ({ ...pago, venta_id: venta.id })),
       { transaction: transaccion }
     );
+
     for (const item of consumo) {
       await moverExistencia(
         {
@@ -219,8 +232,10 @@ export async function registrarVenta({
         transaccion
       );
     }
+
     return venta.id;
   });
+
   return obtenerVenta(ventaId);
 }
 
@@ -240,6 +255,7 @@ export async function listarVentas(sucursalId, filtros = {}) {
     if (filtros.desde) condicion.fecha[Op.gte] = new Date(`${filtros.desde}T00:00:00`);
     if (filtros.hasta) condicion.fecha[Op.lte] = new Date(`${filtros.hasta}T23:59:59`);
   }
+
   return Venta.findAll({
     where: condicion,
     include: [
@@ -265,6 +281,7 @@ export async function anularVenta({ id, sucursalId, usuario, motivo }) {
     if (venta.estado === 'anulada') throw conflicto('La venta ya estaba anulada');
     if (venta.turno.estado !== 'abierto')
       throw conflicto('Solo se anulan ventas de un turno de caja que sigue abierto');
+
     const productos = await Producto.findAll({
       where: { id: venta.lineas.map((linea) => linea.producto_id) },
       include: [{ model: ComponenteReceta, as: 'receta', include: [Articulo] }],
@@ -277,6 +294,7 @@ export async function anularVenta({ id, sucursalId, usuario, motivo }) {
         cantidad: linea.cantidad
       }))
     );
+
     for (const item of devolucion) {
       await moverExistencia(
         {
@@ -292,10 +310,12 @@ export async function anularVenta({ id, sucursalId, usuario, motivo }) {
         transaccion
       );
     }
+
     await venta.update(
       { estado: 'anulada', motivo_anulacion: motivo },
       { transaction: transaccion }
     );
   });
+
   return obtenerVenta(id);
 }

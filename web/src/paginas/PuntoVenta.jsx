@@ -1,4 +1,3 @@
-// web/src/paginas/PuntoVenta.jsx
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/cliente.js';
 import { useSesion } from '../contexto/Sesion.jsx';
@@ -7,6 +6,7 @@ import useEnvio from '../ganchos/useEnvio.js';
 import Documento from '../componentes/Documento.jsx';
 import { Aviso, Boton, Campo, Cargando, Vacio, Ventana } from '../componentes/ui.jsx';
 import { dinero, NOMBRE_METODO, redondear } from '../utilidades/formato.js';
+
 const CIRCULO_CATEGORIA =
   'grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-tinta';
 const TARJETA_CAJA =
@@ -169,6 +169,7 @@ function ElegirCliente({ cliente, alElegir }) {
       >
         Registrar cliente nuevo
       </button>
+
       {nuevo && (
         <Ventana titulo="Cliente nuevo" alCerrar={() => setNuevo(false)}>
           <form onSubmit={guardar} className="space-y-3">
@@ -218,6 +219,7 @@ export default function PuntoVenta() {
   const turno = useConsulta('/turnos/actual');
   const menu = useConsulta('/menu');
   const cobro = useEnvio();
+
   const [categoria, setCategoria] = useState('Todo');
   const [buscar, setBuscar] = useState('');
   const [pedido, setPedido] = useState([]);
@@ -242,9 +244,11 @@ export default function PuntoVenta() {
     const enCategoria = categoria === 'Todo' || producto.categoria === categoria;
     return enCategoria && producto.nombre.toLowerCase().includes(buscar.toLowerCase());
   });
+
   const total = redondear(pedido.reduce((suma, linea) => suma + linea.precio * linea.cantidad, 0));
   const subtotal = redondear(total / 1.13);
   const iva = redondear(total - subtotal);
+
   const pagos = mixto
     ? METODOS.filter((m) => Number(montos[m]) > 0).map((m) => ({
         metodo: m,
@@ -256,10 +260,12 @@ export default function PuntoVenta() {
     .filter((pago) => pago.metodo === 'efectivo')
     .reduce((suma, pago) => suma + pago.monto, 0);
   const cambio = recibido !== '' ? redondear(Number(recibido) - enEfectivo) : 0;
+
   const porId = useMemo(
     () => new Map(productos.map((producto) => [producto.id, producto])),
     [productos]
   );
+
   const usoDelPedido = useMemo(() => {
     const uso = new Map();
     pedido.forEach((linea) => {
@@ -285,6 +291,7 @@ export default function PuntoVenta() {
 
   const enCaja = turno.datos?.resumen?.esperado?.efectivo ?? 0;
   const faltaCambio = cambio > 0 && cambio > enCaja;
+
   const listoParaCobrar =
     pedido.length > 0 &&
     pagado === total &&
@@ -364,6 +371,7 @@ export default function PuntoVenta() {
             onChange={(e) => setBuscar(e.target.value)}
           />
         </div>
+
         <div className="mb-4 flex flex-wrap gap-1.5">
           {categorias.map((nombre) => (
             <button
@@ -376,12 +384,14 @@ export default function PuntoVenta() {
             </button>
           ))}
         </div>
+
         <Aviso error={menu.error} />
         {visibles.length === 0 && (
-          <Vacio titulo="Ningun producto coincide">
-            Prueba con otra categoria o borra la busqueda.
+          <Vacio titulo="Ningún producto coincide">
+            Prueba con otra categoría o borra la búsqueda.
           </Vacio>
         )}
+
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 2xl:grid-cols-4">
           {visibles.map((producto) => {
             const quedan = cuantosMasCaben(producto);
@@ -421,6 +431,7 @@ export default function PuntoVenta() {
           })}
         </ul>
       </section>
+
       <aside className="xl:sticky xl:top-6 xl:self-start">
         <div className="tiquete px-4 pt-4">
           <div className="flex items-baseline justify-between">
@@ -431,6 +442,7 @@ export default function PuntoVenta() {
               </button>
             )}
           </div>
+
           {pedido.length === 0 ? (
             <p className="py-8 text-center text-sm text-piedra-400">
               Toca un producto para agregarlo al pedido.
@@ -468,6 +480,7 @@ export default function PuntoVenta() {
               ))}
             </ul>
           )}
+
           <dl className="linea-punteada mt-2 space-y-0.5 pt-2 text-sm">
             <div className="flex justify-between text-piedra-600">
               <dt>Subtotal sin IVA</dt>
@@ -482,6 +495,7 @@ export default function PuntoVenta() {
               <dd>{dinero(total)}</dd>
             </div>
           </dl>
+
           <div className="linea-punteada mt-3 space-y-3 pt-3">
             <div className={SELECTOR_DOCUMENTO}>
               <button
@@ -500,6 +514,7 @@ export default function PuntoVenta() {
               </button>
             </div>
             {tipoDocumento === 'CCF' && <ElegirCliente cliente={cliente} alElegir={setCliente} />}
+
             {!mixto ? (
               <div className="grid grid-cols-3 gap-1.5">
                 {METODOS.map((opcion) => (
@@ -537,6 +552,7 @@ export default function PuntoVenta() {
             >
               {mixto ? 'Cobrar con un solo método' : 'Dividir el pago entre métodos'}
             </button>
+
             {enEfectivo > 0 && (
               <div className="flex items-end gap-3">
                 <Campo
@@ -554,6 +570,7 @@ export default function PuntoVenta() {
                 </p>
               </div>
             )}
+
             {mixto && pagado !== total && pedido.length > 0 && (
               <Aviso tono="alerta">
                 Los pagos suman {dinero(pagado)} y el total es {dinero(total)}.
@@ -568,6 +585,7 @@ export default function PuntoVenta() {
               </Aviso>
             )}
             <Aviso error={cobro.error} />
+
             <Boton
               grande
               className="w-full"
@@ -579,6 +597,7 @@ export default function PuntoVenta() {
           </div>
         </div>
       </aside>
+
       {emitida && (
         <Ventana titulo="Venta cobrada" alCerrar={() => setEmitida(null)} ancho="max-w-md">
           <Documento venta={emitida} />
@@ -593,4 +612,3 @@ export default function PuntoVenta() {
     </div>
   );
 }
-

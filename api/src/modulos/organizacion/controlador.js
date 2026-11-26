@@ -3,7 +3,9 @@ import { Sucursal, Usuario, Correlativo, Empleado } from '../../modelos/index.js
 import { ROLES, TIPOS_DOCUMENTO } from '../../config/reglas.js';
 import { exigir, tomar, unoDe } from '../../utilidades/validar.js';
 import { noEncontrado, solicitudInvalida } from '../../utilidades/errores.js';
+
 const CAMPOS_SUCURSAL = ['codigo', 'nombre', 'direccion', 'municipio', 'telefono', 'activa'];
+
 export async function listarSucursales(req, res, next) {
   try {
     const sucursales = await Sucursal.findAll({ order: [['nombre', 'ASC']] });
@@ -12,6 +14,7 @@ export async function listarSucursales(req, res, next) {
     next(error);
   }
 }
+
 export async function crearSucursal(req, res, next) {
   try {
     exigir(req.body, ['codigo', 'nombre']);
@@ -26,6 +29,7 @@ export async function crearSucursal(req, res, next) {
     next(error);
   }
 }
+
 export async function actualizarSucursal(req, res, next) {
   try {
     const sucursal = await Sucursal.findByPk(req.params.id);
@@ -41,6 +45,7 @@ export async function actualizarSucursal(req, res, next) {
     next(error);
   }
 }
+
 export async function listarUsuarios(req, res, next) {
   try {
     const usuarios = await Usuario.findAll({
@@ -52,12 +57,13 @@ export async function listarUsuarios(req, res, next) {
     next(error);
   }
 }
+
 export async function crearUsuario(req, res, next) {
   try {
     exigir(req.body, ['nombre', 'correo', 'clave', 'rol']);
     unoDe(req.body.rol, ROLES, 'El rol');
     if (String(req.body.clave).length < 8)
-        throw solicitudInvalida('La contraseña debe tener al menos 8 caracteres');
+      throw solicitudInvalida('La contraseña debe tener al menos 8 caracteres');
     if (req.body.rol !== 'administrador' && !req.body.sucursal_id) {
       throw solicitudInvalida('Asigna una sucursal a este usuario');
     }
@@ -74,6 +80,7 @@ export async function crearUsuario(req, res, next) {
     next(error);
   }
 }
+
 export async function actualizarUsuario(req, res, next) {
   try {
     const usuario = await Usuario.findByPk(req.params.id);

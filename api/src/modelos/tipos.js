@@ -1,4 +1,5 @@
 import { DataTypes } from 'sequelize';
+
 export function decimal(nombre, escala = 2, opciones = {}) {
   return {
     type: DataTypes.DECIMAL(14, escala),
@@ -11,6 +12,7 @@ export function decimal(nombre, escala = 2, opciones = {}) {
     ...opciones
   };
 }
+
 export const texto = (largo = 120, opciones = {}) => ({
   type: DataTypes.STRING(largo),
   ...opciones

@@ -55,6 +55,7 @@ export async function crearMovimiento(req, res, next) {
     next(error);
   }
 }
+
 export async function cerrar(req, res, next) {
   try {
     exigir(req.body, ['contado_efectivo', 'contado_tarjeta', 'contado_bitcoin']);
