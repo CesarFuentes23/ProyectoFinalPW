@@ -17,6 +17,7 @@ export const TurnoCaja = bd.define('turno_caja', {
   contado_bitcoin: opcional('contado_bitcoin'),
   observacion: texto(240)
 });
+
 export const MovimientoCaja = bd.define(
   'movimiento_caja',
   {

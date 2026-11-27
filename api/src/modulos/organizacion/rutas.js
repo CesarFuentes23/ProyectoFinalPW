@@ -1,2 +1,15 @@
-// api/src/modulos/organizacion/rutas.js
-// pendiente: lo sube quien tiene este módulo
+import { Router } from 'express';
+import { permitir } from '../../intermedios/autenticar.js';
+import * as controlador from './controlador.js';
+
+const rutas = Router();
+
+rutas.get('/sucursales', controlador.listarSucursales);
+rutas.post('/sucursales', permitir('administrador'), controlador.crearSucursal);
+rutas.put('/sucursales/:id', permitir('administrador'), controlador.actualizarSucursal);
+
+rutas.get('/usuarios', permitir('administrador'), controlador.listarUsuarios);
+rutas.post('/usuarios', permitir('administrador'), controlador.crearUsuario);
+rutas.put('/usuarios/:id', permitir('administrador'), controlador.actualizarUsuario);
+
+export default rutas;
