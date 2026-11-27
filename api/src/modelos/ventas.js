@@ -5,6 +5,11 @@ import { decimal, requerido, texto } from './tipos.js';
 
 export const Cliente = bd.define('cliente', {
   nombre: requerido(160),
+  tipo_contribuyente: {
+    type: DataTypes.ENUM('sociedad', 'persona_natural'),
+    allowNull: false,
+    defaultValue: 'sociedad'
+  },
   nit: texto(20),
   nrc: texto(12),
   giro: texto(160),
@@ -59,3 +64,4 @@ export const VentaPago = bd.define(
   },
   { timestamps: false }
 );
+

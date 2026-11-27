@@ -4,7 +4,7 @@ import { useSesion } from '../contexto/Sesion.jsx';
 import useConsulta from '../ganchos/useConsulta.js';
 import useEnvio from '../ganchos/useEnvio.js';
 import Documento from '../componentes/Documento.jsx';
-import { Aviso, Boton, Campo, Cargando, Vacio, Ventana } from '../componentes/ui.jsx';
+import { Aviso, Boton, Campo, Cargando, Selector, Vacio, Ventana } from '../componentes/ui.jsx';
 import { dinero, NOMBRE_METODO, redondear } from '../utilidades/formato.js';
 
 const CIRCULO_CATEGORIA =
@@ -107,12 +107,28 @@ function AbrirCaja({ alAbrir }) {
   );
 }
 
+const TIPOS_CONTRIBUYENTE = [
+  { valor: 'sociedad', texto: 'Sociedad' },
+  { valor: 'persona_natural', texto: 'Persona natural' }
+];
+const NOMBRE_TIPO = { sociedad: 'Sociedad', persona_natural: 'Persona natural' };
+const FORMATO_NIT_SOCIEDAD = '\\d{4}-\\d{6}-\\d{3}-\\d';
+const FORMATO_NIT_PERSONA = '\\d{8}-\\d|\\d{4}-\\d{6}-\\d{3}-\\d';
+
 function ElegirCliente({ cliente, alElegir }) {
   const [buscar, setBuscar] = useState('');
   const [nuevo, setNuevo] = useState(false);
   const { datos: clientes } = useConsulta('/clientes', { buscar });
   const { enviando, error, enviar } = useEnvio();
-  const [ficha, setFicha] = useState({ nombre: '', nit: '', nrc: '', giro: '', direccion: '' });
+  const [ficha, setFicha] = useState({
+    nombre: '',
+    tipo_contribuyente: 'sociedad',
+    nit: '',
+    nrc: '',
+    giro: '',
+    direccion: ''
+  });
+  const esSociedad = ficha.tipo_contribuyente === 'sociedad';
 
   async function guardar(evento) {
     evento.preventDefault();
@@ -128,7 +144,7 @@ function ElegirCliente({ cliente, alElegir }) {
       <div className="rounded-md bg-cafe-50 px-3 py-2 text-sm">
         <p className="font-semibold">{cliente.nombre}</p>
         <p className="text-piedra-600">
-          NIT {cliente.nit} y NRC {cliente.nrc}
+          {NOMBRE_TIPO[cliente.tipo_contribuyente]}, NIT {cliente.nit} y NRC {cliente.nrc}
         </p>
         <button
           type="button"
@@ -180,10 +196,23 @@ function ElegirCliente({ cliente, alElegir }) {
               value={ficha.nombre}
               onChange={(e) => setFicha({ ...ficha, nombre: e.target.value })}
             />
+            <Selector
+              etiqueta="Tipo de contribuyente"
+              value={ficha.tipo_contribuyente}
+              onChange={(e) => setFicha({ ...ficha, tipo_contribuyente: e.target.value })}
+              opciones={TIPOS_CONTRIBUYENTE}
+            />
             <div className="grid grid-cols-2 gap-3">
               <Campo
-                etiqueta="NIT"
+                etiqueta={esSociedad ? 'NIT' : 'DUI o NIT'}
                 required
+                placeholder={esSociedad ? '0614-140217-106-3' : '01234567-8'}
+                pattern={esSociedad ? FORMATO_NIT_SOCIEDAD : FORMATO_NIT_PERSONA}
+                title={
+                  esSociedad
+                    ? 'Escribe el NIT de 14 dígitos con guiones, por ejemplo 0614-140217-106-3.'
+                    : 'Escribe el DUI con guion (01234567-8) o el NIT de 14 dígitos.'
+                }
                 value={ficha.nit}
                 onChange={(e) => setFicha({ ...ficha, nit: e.target.value })}
               />

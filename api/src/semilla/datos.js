@@ -439,9 +439,54 @@ export const proveedores = [
   }
 ];
 
+// lo que vende cada proveedor y a qué precio por unidad (lo fija el proveedor)
+export const catalogos = {
+  'Cooperativa Cafetalera Los Pirineos': [
+    ['Café de especialidad en grano', 0.023],
+    ['Café en grano Apaneca 340 g', 7.6],
+    ['Café molido Chalatenango 340 g', 7.2],
+    ['Cacao en polvo', 0.014],
+    ['Barra de chocolate 70 %', 2.4]
+  ],
+  'Lácteos del Corral, S.A. de C.V.': [
+    ['Leche entera', 0.0012],
+    ['Leche de avena', 0.0034],
+    ['Quesillo', 0.009],
+    ['Crema salvadoreña', 0.0056]
+  ],
+  'Empaques y Desechables Cuscatlán': [
+    ['Vaso de 8 oz', 0.06],
+    ['Vaso de 12 oz', 0.08],
+    ['Vaso de 16 oz', 0.09],
+    ['Tapadera', 0.03],
+    ['Viñeta', 0.02],
+    ['Caja para llevar', 0.18]
+  ],
+  'Distribuidora La Tiendona': [
+    ['Leche entera', 0.0014],
+    ['Concentrado de chai', 0.011],
+    ['Jarabe de vainilla', 0.009],
+    ['Horchata de morro en polvo', 0.008],
+    ['Azúcar', 0.0011],
+    ['Hielo', 0.0002],
+    ['Pan de masa madre', 0.35],
+    ['Pan ciabatta', 0.45],
+    ['Aguacate', 0.0046],
+    ['Huevo', 0.16],
+    ['Loroco', 0.011],
+    ['Frijoles molidos', 0.0026],
+    ['Plátano maduro', 0.25],
+    ['Pechuga de pollo', 0.0066],
+    ['Masa de quesadilla', 0.0048],
+    ['Agua embotellada 600 ml', 0.45],
+    ['Jugo de naranja embotellado', 1.1]
+  ]
+};
+
 export const clientes = [
   {
     nombre: 'Estudio Creativo Ceiba, S.A. de C.V.',
+    tipo_contribuyente: 'sociedad',
     nit: '0614-140217-106-3',
     nrc: '267104-2',
     giro: 'Servicios de publicidad',
@@ -449,15 +494,17 @@ export const clientes = [
     correo: 'administracion@estudioceiba.example'
   },
   {
-    nombre: 'Clínica Dental Sonrisa Tecleña',
-    nit: '0511-020914-101-7',
+    nombre: 'Andrea Beatriz Mejía Rosales',
+    tipo_contribuyente: 'persona_natural',
+    nit: '04512378-6',
     nrc: '231908-0',
     giro: 'Servicios odontológicos',
     direccion: '5a Calle Oriente 3-4, Santa Tecla',
-    correo: 'contabilidad@sonrisateclena.example'
+    correo: 'andrea.mejia@sonrisateclena.example'
   },
   {
     nombre: 'Consultores Izalco, S.A. de C.V.',
+    tipo_contribuyente: 'sociedad',
     nit: '0614-081119-102-5',
     nrc: '298331-6',
     giro: 'Consultoría empresarial',

@@ -30,7 +30,7 @@ function alcance(req) {
 
 export async function listarProveedores(req, res, next) {
   try {
-    res.json(await Proveedor.findAll({ order: [['nombre', 'ASC']] }));
+    res.json(await servicio.listarProveedores());
   } catch (error) {
     next(error);
   }
@@ -129,3 +129,4 @@ export async function resumen(req, res, next) {
     next(error);
   }
 }
+

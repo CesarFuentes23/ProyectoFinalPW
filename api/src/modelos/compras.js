@@ -13,6 +13,12 @@ export const Proveedor = bd.define('proveedor', {
   activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true }
 });
 
+export const PrecioProveedor = bd.define(
+  'precio_proveedor',
+  { precio: decimal('precio', 4) },
+  { indexes: [{ unique: true, fields: ['proveedor_id', 'articulo_id'] }] }
+);
+
 export const Compra = bd.define(
   'compra',
   {
@@ -61,3 +67,4 @@ export const PagoProveedor = bd.define(
   },
   { updatedAt: false }
 );
+

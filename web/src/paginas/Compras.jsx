@@ -28,7 +28,6 @@ const LINEA_VACIA = { articulo_id: '', descripcion: '', cantidad: '', costo_unit
 
 function CompraNueva({ alCerrar, alGuardar }) {
   const proveedores = useConsulta('/proveedores');
-  const articulos = useConsulta('/articulos', { activos: 'true' });
   const { enviando, error, enviar } = useEnvio();
   const [ficha, setFicha] = useState({
     proveedor_id: '',
@@ -48,8 +47,27 @@ function CompraNueva({ alCerrar, alGuardar }) {
   );
   const iva = ficha.tipo_documento === 'CCF' ? redondear(suma * 0.13) : 0;
 
+  const proveedor = (proveedores.datos || []).find((p) => p.id === Number(ficha.proveedor_id));
+  const catalogo = proveedor ? proveedor.catalogo : [];
+
+  function elegirProveedor(id) {
+    setFicha({ ...ficha, proveedor_id: id });
+    setLineas([{ ...LINEA_VACIA }]);
+  }
+
   function cambiarLinea(indice, campo, valor) {
     setLineas(lineas.map((linea, i) => (i === indice ? { ...linea, [campo]: valor } : linea)));
+  }
+
+  function elegirArticulo(indice, articuloId) {
+    const precio = catalogo.find((item) => item.articulo_id === Number(articuloId));
+    setLineas(
+      lineas.map((linea, i) =>
+        i === indice
+          ? { ...linea, articulo_id: articuloId, costo_unitario: precio ? precio.precio : '' }
+          : linea
+      )
+    );
   }
 
   async function guardar(evento) {
@@ -62,7 +80,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
           articulo_id: linea.articulo_id ? Number(linea.articulo_id) : null,
           descripcion: linea.descripcion,
           cantidad: Number(linea.cantidad),
-          costo_unitario: Number(linea.costo_unitario)
+          costo_unitario: linea.articulo_id ? undefined : Number(linea.costo_unitario)
         }))
       })
     );
@@ -71,20 +89,23 @@ function CompraNueva({ alCerrar, alGuardar }) {
 
   const opcionesArticulo = [
     { valor: '', texto: 'Gasto que no entra a bodega' },
-    ...(articulos.datos || []).map((a) => ({ valor: a.id, texto: `${a.nombre} (${a.unidad})` }))
+    ...catalogo.map((item) => ({
+      valor: item.articulo_id,
+      texto: `${item.articulo.nombre} (${item.articulo.unidad})`
+    }))
   ];
 
   return (
     <Ventana titulo="Registrar factura de compra" alCerrar={alCerrar} ancho="max-w-3xl">
       <form onSubmit={guardar} className="space-y-4">
-        <Aviso error={error || proveedores.error || articulos.error} />
+        <Aviso error={error || proveedores.error} />
         <div className="grid gap-3 sm:grid-cols-3">
           <Selector
             etiqueta="Proveedor"
             required
             className="sm:col-span-2"
             value={ficha.proveedor_id}
-            onChange={(e) => setFicha({ ...ficha, proveedor_id: e.target.value })}
+            onChange={(e) => elegirProveedor(e.target.value)}
             opciones={[
               { valor: '', texto: 'Elige un proveedor' },
               ...(proveedores.datos || [])
@@ -134,7 +155,14 @@ function CompraNueva({ alCerrar, alGuardar }) {
         </div>
 
         <div className="linea-punteada pt-3">
-          <p className="mb-2 font-semibold">Detalle de la factura</p>
+          <p className="font-semibold">Detalle de la factura</p>
+          <p className="mb-2 text-xs text-piedra-600">
+            {!proveedor
+              ? 'Elige primero el proveedor para ver lo que vende.'
+              : catalogo.length > 0
+                ? 'Solo aparecen los productos de este proveedor, con el precio que él fija.'
+                : 'Este proveedor no tiene productos registrados; solo se pueden anotar gastos.'}
+          </p>
           <div className="space-y-2">
             {lineas.map((linea, indice) => (
               <div key={indice} className="grid grid-cols-12 items-end gap-2">
@@ -142,7 +170,7 @@ function CompraNueva({ alCerrar, alGuardar }) {
                   etiqueta="Artículo"
                   className="col-span-12 sm:col-span-5"
                   value={linea.articulo_id}
-                  onChange={(e) => cambiarLinea(indice, 'articulo_id', e.target.value)}
+                  onChange={(e) => elegirArticulo(indice, e.target.value)}
                   opciones={opcionesArticulo}
                 />
                 {!linea.articulo_id && (
@@ -165,12 +193,15 @@ function CompraNueva({ alCerrar, alGuardar }) {
                   onChange={(e) => cambiarLinea(indice, 'cantidad', e.target.value)}
                 />
                 <Campo
-                  etiqueta="Costo unitario"
+                  etiqueta={linea.articulo_id ? 'Precio fijo' : 'Costo unitario'}
                   className="col-span-4 sm:col-span-2"
                   type="number"
                   min="0.0001"
                   step="0.0001"
                   required
+                  readOnly={Boolean(linea.articulo_id)}
+                  disabled={Boolean(linea.articulo_id)}
+                  title={linea.articulo_id ? 'El precio lo fija el proveedor' : undefined}
                   value={linea.costo_unitario}
                   onChange={(e) => cambiarLinea(indice, 'costo_unitario', e.target.value)}
                 />
@@ -470,6 +501,7 @@ function Proveedores() {
     { titulo: 'NIT', celda: (p) => p.nit },
     { titulo: 'NRC', celda: (p) => p.nrc },
     { titulo: 'Contacto', celda: (p) => `${p.contacto || ''} ${p.telefono || ''}` },
+    { titulo: 'Productos', derecha: true, celda: (p) => p.catalogo.length },
     {
       titulo: 'Crédito',
       derecha: true,
@@ -513,6 +545,28 @@ function Proveedores() {
               <Campo etiqueta="Correo" type="email" {...campo('correo')} />
               <Campo etiqueta="Días de crédito" type="number" min="0" {...campo('dias_credito')} />
             </div>
+            {ficha.id && (
+              <div className="linea-punteada pt-3">
+                <p className="font-semibold">Lo que vende</p>
+                <p className="mb-2 text-xs text-piedra-600">
+                  Los precios los fija el proveedor y no se cambian desde aquí.
+                </p>
+                {ficha.catalogo.length === 0 ? (
+                  <p className="text-sm text-piedra-600">No tiene productos registrados.</p>
+                ) : (
+                  <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
+                    {ficha.catalogo.map((item) => (
+                      <li key={item.id} className="flex justify-between gap-3">
+                        <span>{item.articulo.nombre}</span>
+                        <span className="font-semibold">
+                          ${Number(item.precio).toFixed(4)} por {item.articulo.unidad}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
             <Boton type="submit" disabled={guardado.enviando}>
               Guardar proveedor
             </Boton>

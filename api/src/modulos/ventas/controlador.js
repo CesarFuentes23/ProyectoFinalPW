@@ -6,7 +6,35 @@ import { exigir, tomar, unoDe } from '../../utilidades/validar.js';
 import { noEncontrado, solicitudInvalida } from '../../utilidades/errores.js';
 import * as servicio from './servicio.js';
 
-const CAMPOS_CLIENTE = ['nombre', 'nit', 'nrc', 'giro', 'direccion', 'correo'];
+const CAMPOS_CLIENTE = [
+  'nombre',
+  'tipo_contribuyente',
+  'nit',
+  'nrc',
+  'giro',
+  'direccion',
+  'correo'
+];
+
+const FORMATO_NIT = {
+  sociedad: /^\d{4}-\d{6}-\d{3}-\d$/,
+  persona_natural: /^(\d{8}-\d|\d{4}-\d{6}-\d{3}-\d)$/
+};
+
+function validarCliente(datos) {
+  const tipo = unoDe(
+    datos.tipo_contribuyente || 'sociedad',
+    Object.keys(FORMATO_NIT),
+    'El tipo de contribuyente'
+  );
+  if (datos.nit && !FORMATO_NIT[tipo].test(String(datos.nit).trim())) {
+    throw solicitudInvalida(
+      tipo === 'sociedad'
+        ? 'El NIT de una sociedad lleva 14 dígitos, por ejemplo 0614-140217-106-3'
+        : 'Para persona natural escribe el DUI (01234567-8) o el NIT de 14 dígitos'
+    );
+  }
+}
 
 export async function crearVenta(req, res, next) {
   try {
@@ -80,6 +108,7 @@ export async function listarClientes(req, res, next) {
 export async function crearCliente(req, res, next) {
   try {
     exigir(req.body, ['nombre']);
+    validarCliente(req.body);
     res.status(201).json(await Cliente.create(tomar(req.body, CAMPOS_CLIENTE)));
   } catch (error) {
     next(error);
@@ -90,6 +119,7 @@ export async function actualizarCliente(req, res, next) {
   try {
     const cliente = await Cliente.findByPk(req.params.id);
     if (!cliente) throw noEncontrado('El cliente');
+    validarCliente({ ...cliente.get(), ...req.body });
     await cliente.update(tomar(req.body, CAMPOS_CLIENTE));
     res.json(cliente);
   } catch (error) {

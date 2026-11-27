@@ -4,6 +4,7 @@ import {
   Compra,
   CompraLinea,
   PagoProveedor,
+  PrecioProveedor,
   Proveedor,
   Articulo,
   Existencia,
@@ -18,26 +19,48 @@ import { moverExistencia } from '../inventario/servicio.js';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque', 'tarjeta'];
 
-async function prepararLineas(lineas, transaccion) {
+async function precioDelProveedor(proveedor, articuloId, transaccion) {
+  const articulo = await Articulo.findByPk(articuloId, {
+    transaction: transaccion,
+    lock: transaccion.LOCK.UPDATE
+  });
+  if (!articulo) throw solicitudInvalida('La compra incluye un artículo que no existe');
+  const precio = await PrecioProveedor.findOne({
+    where: { proveedor_id: proveedor.id, articulo_id: articulo.id },
+    transaction: transaccion
+  });
+  if (!precio) throw solicitudInvalida(`${proveedor.nombre} no vende ${articulo.nombre}`);
+  return { articulo, precio: precio.precio };
+}
+
+async function prepararLineas(proveedor, lineas, transaccion) {
   listaNoVacia(lineas, 'La compra');
   const preparadas = [];
   for (const linea of lineas) {
     const cantidad = numeroPositivo(linea.cantidad, 'La cantidad');
-    const costoUnitario = numeroPositivo(linea.costo_unitario, 'El costo unitario');
-    let articulo = null;
     if (linea.articulo_id) {
-      articulo = await Articulo.findByPk(linea.articulo_id, {
-        transaction: transaccion,
-        lock: transaccion.LOCK.UPDATE
+      const { articulo, precio } = await precioDelProveedor(
+        proveedor,
+        linea.articulo_id,
+        transaccion
+      );
+      preparadas.push({
+        articulo,
+        clase: 'costo',
+        descripcion: articulo.nombre,
+        cantidad,
+        costo_unitario: precio,
+        total: redondear(cantidad * precio)
       });
-      if (!articulo) throw solicitudInvalida('La compra incluye un artículo que no existe');
-    } else if (!linea.descripcion) {
-      throw solicitudInvalida('Describe cada gasto que no entra a inventario');
+      continue;
     }
+    if (!linea.descripcion)
+      throw solicitudInvalida('Describe cada gasto que no entra a inventario');
+    const costoUnitario = numeroPositivo(linea.costo_unitario, 'El costo unitario');
     preparadas.push({
-      articulo,
-      clase: articulo ? 'costo' : 'gasto',
-      descripcion: articulo ? articulo.nombre : linea.descripcion,
+      articulo: null,
+      clase: 'gasto',
+      descripcion: linea.descripcion,
       cantidad,
       costo_unitario: costoUnitario,
       total: redondear(cantidad * costoUnitario)
@@ -61,7 +84,7 @@ export async function registrarCompra({ usuario, sucursalId, datos }) {
     const proveedor = await Proveedor.findByPk(datos.proveedor_id, { transaction: transaccion });
     if (!proveedor) throw solicitudInvalida('El proveedor no existe');
 
-    const lineas = await prepararLineas(datos.lineas, transaccion);
+    const lineas = await prepararLineas(proveedor, datos.lineas, transaccion);
     const suma = lineas.reduce((acumulado, linea) => acumulado + linea.total, 0);
     const totales =
       datos.tipo_documento === 'CCF'
@@ -142,6 +165,22 @@ export async function registrarCompra({ usuario, sucursalId, datos }) {
   });
 
   return obtenerCompra(compraId);
+}
+
+export async function listarProveedores() {
+  return Proveedor.findAll({
+    include: [
+      {
+        model: PrecioProveedor,
+        as: 'catalogo',
+        include: [{ model: Articulo, attributes: ['id', 'nombre', 'unidad', 'tipo'] }]
+      }
+    ],
+    order: [
+      ['nombre', 'ASC'],
+      [{ model: PrecioProveedor, as: 'catalogo' }, Articulo, 'nombre', 'ASC']
+    ]
+  });
 }
 
 export async function obtenerCompra(id) {

@@ -13,6 +13,7 @@ import {
   Correlativo,
   Cliente,
   Proveedor,
+  PrecioProveedor,
   Empleado,
   TramoRenta,
   Venta,
@@ -29,14 +30,14 @@ import * as datos from './datos.js';
 
 const SIN_REPONER = ['Leche de avena', 'Barra de chocolate 70 %'];
 
-const PROVEEDOR_DE = {
-  'Café de especialidad en grano': 'Cooperativa Cafetalera Los Pirineos',
-  'Café en grano Apaneca 340 g': 'Cooperativa Cafetalera Los Pirineos',
-  'Café molido Chalatenango 340 g': 'Cooperativa Cafetalera Los Pirineos',
-  'Leche entera': 'Lácteos del Corral, S.A. de C.V.',
-  Quesillo: 'Lácteos del Corral, S.A. de C.V.',
-  'Crema salvadoreña': 'Lácteos del Corral, S.A. de C.V.'
-};
+// para reponer se le compra a quien lo venga dando más barato
+const PROVEEDOR_DE = {};
+Object.entries(datos.catalogos).forEach(([proveedor, articulos]) => {
+  articulos.forEach(([articulo, precio]) => {
+    const actual = PROVEEDOR_DE[articulo];
+    if (!actual || precio < actual.precio) PROVEEDOR_DE[articulo] = { proveedor, precio };
+  });
+});
 
 async function crearBaseSiFalta() {
   const cliente = new pg.Client({
@@ -122,7 +123,19 @@ async function sembrarCatalogos() {
   }
 
   await Cliente.bulkCreate(datos.clientes);
-  await Proveedor.bulkCreate(datos.proveedores);
+  const proveedores = await Proveedor.bulkCreate(datos.proveedores);
+  const proveedorPorNombre = new Map(proveedores.map((proveedor) => [proveedor.nombre, proveedor]));
+  const precios = [];
+  Object.entries(datos.catalogos).forEach(([proveedor, articulos]) => {
+    articulos.forEach(([articulo, precio]) => {
+      precios.push({
+        proveedor_id: proveedorPorNombre.get(proveedor).id,
+        articulo_id: porNombre.get(articulo).id,
+        precio
+      });
+    });
+  });
+  await PrecioProveedor.bulkCreate(precios);
   await TramoRenta.bulkCreate(datos.tramosRenta);
 
   const empleados = await Empleado.bulkCreate(
@@ -171,11 +184,7 @@ async function fecharMovimientos(origen, origenId, fecha) {
 }
 
 function planDeCompras({ porCodigo, porNombre }) {
-  const linea = (nombre, cantidad, costo) => ({
-    articulo_id: porNombre.get(nombre).id,
-    cantidad,
-    costo_unitario: costo
-  });
+  const linea = (nombre, cantidad) => ({ articulo_id: porNombre.get(nombre).id, cantidad });
   const proveedor = async (nombre) => (await Proveedor.findOne({ where: { nombre } })).id;
   const compra = (dia, correo, codigo, armar, pago) => ({
     dia,
@@ -196,9 +205,9 @@ function planDeCompras({ porCodigo, porNombre }) {
         numero_documento: '018830',
         condicion: 'credito',
         lineas: [
-          linea('Leche entera', 30000, 0.0012),
-          linea('Crema salvadoreña', 2000, 0.0056),
-          linea('Quesillo', 3000, 0.0089)
+          linea('Leche entera', 30000),
+          linea('Crema salvadoreña', 2000),
+          linea('Quesillo', 3000)
         ]
       }),
       { dia: 6, monto: 30, metodo: 'transferencia', referencia: 'TRF-88213' }
@@ -209,8 +218,8 @@ function planDeCompras({ porCodigo, porNombre }) {
       numero_documento: '004512',
       condicion: 'credito',
       lineas: [
-        linea('Café de especialidad en grano', 9000, 0.023),
-        linea('Café en grano Apaneca 340 g', 12, 7.6)
+        linea('Café de especialidad en grano', 9000),
+        linea('Café en grano Apaneca 340 g', 12)
       ]
     })),
     compra(10, 'gerente.santaana@origenes.sv', 'SAN', async () => ({
@@ -218,11 +227,7 @@ function planDeCompras({ porCodigo, porNombre }) {
       tipo_documento: 'CCF',
       numero_documento: '002251',
       condicion: 'credito',
-      lineas: [
-        linea('Vaso de 12 oz', 300, 0.08),
-        linea('Tapadera', 500, 0.03),
-        linea('Viñeta', 400, 0.02)
-      ]
+      lineas: [linea('Vaso de 12 oz', 300), linea('Tapadera', 500), linea('Viñeta', 400)]
     })),
     compra(
       9,
@@ -234,8 +239,8 @@ function planDeCompras({ porCodigo, porNombre }) {
         numero_documento: '004538',
         condicion: 'credito',
         lineas: [
-          linea('Café de especialidad en grano', 5000, 0.023),
-          linea('Café molido Chalatenango 340 g', 10, 7.2)
+          linea('Café de especialidad en grano', 5000),
+          linea('Café molido Chalatenango 340 g', 10)
         ]
       }),
       { dia: 3, total: true, metodo: 'transferencia', referencia: 'TRF-90417' }
@@ -259,18 +264,14 @@ function planDeCompras({ porCodigo, porNombre }) {
       tipo_documento: 'CCF',
       numero_documento: '018907',
       condicion: 'credito',
-      lineas: [linea('Leche entera', 20000, 0.0012), linea('Quesillo', 2000, 0.009)]
+      lineas: [linea('Leche entera', 20000), linea('Quesillo', 2000)]
     })),
     compra(4, 'gerente.escalon@origenes.sv', 'ESC', async () => ({
       proveedor_id: await proveedor('Empaques y Desechables Cuscatlán'),
       tipo_documento: 'CCF',
       numero_documento: '002207',
       condicion: 'credito',
-      lineas: [
-        linea('Vaso de 16 oz', 500, 0.09),
-        linea('Vaso de 12 oz', 500, 0.08),
-        linea('Tapadera', 1000, 0.03)
-      ]
+      lineas: [linea('Vaso de 16 oz', 500), linea('Vaso de 12 oz', 500), linea('Tapadera', 1000)]
     })),
     compra(3, 'gerente.santaana@origenes.sv', 'SAN', async () => ({
       proveedor_id: await proveedor('Distribuidora La Tiendona'),
@@ -278,11 +279,7 @@ function planDeCompras({ porCodigo, porNombre }) {
       numero_documento: '77391',
       condicion: 'contado',
       metodo_pago: 'efectivo',
-      lineas: [
-        linea('Aguacate', 2500, 0.0047),
-        linea('Huevo', 90, 0.17),
-        linea('Frijoles molidos', 3000, 0.0026)
-      ]
+      lineas: [linea('Aguacate', 2500), linea('Huevo', 90), linea('Frijoles molidos', 3000)]
     })),
     compra(2, 'gerente.escalon@origenes.sv', 'ESC', async () => ({
       proveedor_id: await proveedor('Distribuidora La Tiendona'),
@@ -290,11 +287,7 @@ function planDeCompras({ porCodigo, porNombre }) {
       numero_documento: '77120',
       condicion: 'contado',
       metodo_pago: 'efectivo',
-      lineas: [
-        linea('Aguacate', 4000, 0.0046),
-        linea('Huevo', 120, 0.16),
-        linea('Plátano maduro', 40, 0.25)
-      ]
+      lineas: [linea('Aguacate', 4000), linea('Huevo', 120), linea('Plátano maduro', 40)]
     }))
   ];
 }
@@ -408,16 +401,9 @@ async function reabastecer(dia, { porCodigo, objetivos }) {
         (objetivos.get(`${sucursalId}-${articulo.id}`) || 0) - (existencias.get(articulo.id) || 0)
       );
       if (falta <= 0) continue;
-      const proveedor =
-        PROVEEDOR_DE[articulo.nombre] ||
-        (articulo.tipo === 'empaque'
-          ? 'Empaques y Desechables Cuscatlán'
-          : 'Distribuidora La Tiendona');
+      const { proveedor } = PROVEEDOR_DE[articulo.nombre];
       if (!pedidos.has(proveedor)) pedidos.set(proveedor, []);
-      const costo = Math.round(articulo.costo_promedio * (1 + (dia % 3) * 0.02) * 10000) / 10000;
-      pedidos
-        .get(proveedor)
-        .push({ articulo_id: articulo.id, cantidad: falta, costo_unitario: costo });
+      pedidos.get(proveedor).push({ articulo_id: articulo.id, cantidad: falta });
     }
 
     let indice = 0;

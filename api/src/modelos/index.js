@@ -8,7 +8,7 @@ import {
   ComponenteReceta
 } from './catalogo.js';
 import { Cliente, Correlativo, Venta, VentaLinea, VentaPago } from './ventas.js';
-import { Proveedor, Compra, CompraLinea, PagoProveedor } from './compras.js';
+import { Proveedor, PrecioProveedor, Compra, CompraLinea, PagoProveedor } from './compras.js';
 import { TurnoCaja, MovimientoCaja } from './caja.js';
 import { Empleado, TramoRenta, Planilla, PlanillaDetalle } from './personal.js';
 
@@ -58,6 +58,14 @@ Venta.hasMany(VentaPago, {
   onDelete: 'CASCADE'
 });
 VentaPago.belongsTo(Venta, obligatoria('venta_id'));
+
+Proveedor.hasMany(PrecioProveedor, {
+  as: 'catalogo',
+  foreignKey: { name: 'proveedor_id', allowNull: false },
+  onDelete: 'CASCADE'
+});
+PrecioProveedor.belongsTo(Proveedor, obligatoria('proveedor_id'));
+PrecioProveedor.belongsTo(Articulo, obligatoria('articulo_id'));
 
 Compra.belongsTo(Proveedor, obligatoria('proveedor_id'));
 Proveedor.hasMany(Compra, obligatoria('proveedor_id'));
@@ -114,6 +122,7 @@ export {
   VentaLinea,
   VentaPago,
   Proveedor,
+  PrecioProveedor,
   Compra,
   CompraLinea,
   PagoProveedor,
